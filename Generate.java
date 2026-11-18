@@ -340,7 +340,10 @@ class Generate
             case 1:
                 ll = Context.lexicalLevel;
                 if (ll > HMachine.displaySize)
+                {
                     System.out.println("Too many nested scope.");
+                    System.exit(1); // Added in 2026
+                }
                 else
                 {
                     HMachine.memory[cell] = HMachine.NAME;
