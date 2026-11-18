@@ -1,0 +1,452 @@
+\documentclass[11pt,a4paper]{article}
+
+% ------------------------------------------------------------------
+% Paket dasar
+% ------------------------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[a4paper,margin=2.5cm,headheight=15pt]{geometry}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage[most]{tcolorbox}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage[hidelinks]{hyperref}
+
+% ------------------------------------------------------------------
+% Nama bagian dalam bahasa Indonesia
+% ------------------------------------------------------------------
+\renewcommand{\contentsname}{Daftar Isi}
+\renewcommand{\tablename}{Tabel}
+\renewcommand{\figurename}{Gambar}
+\renewcommand{\refname}{Referensi}
+
+% ------------------------------------------------------------------
+% Tampilan
+% ------------------------------------------------------------------
+\definecolor{reportblue}{HTML}{1F4E79}
+\definecolor{reportgray}{HTML}{F2F5F8}
+\definecolor{codegray}{HTML}{F7F7F7}
+\definecolor{codecomment}{HTML}{5A7A5A}
+
+\titleformat{\section}
+  {\Large\bfseries\color{reportblue}}
+  {\thesection}{0.7em}{}
+\titleformat{\subsection}
+  {\large\bfseries\color{reportblue}}
+  {\thesubsection}{0.6em}{}
+\titleformat{\subsubsection}
+  {\normalsize\bfseries}
+  {\thesubsubsection}{0.5em}{}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+\setlength{\emergencystretch}{2em}
+\renewcommand{\tabularxcolumn}[1]{>{\raggedright\arraybackslash}m{#1}}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Laporan Mingguan}
+\fancyhead[R]{\small Teknik Kompilator}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\setlist[itemize]{topsep=0.35em,itemsep=0.2em,parsep=0.2em}
+\setlist[enumerate]{topsep=0.35em,itemsep=0.25em,parsep=0.2em}
+
+% ------------------------------------------------------------------
+% Gaya listing kode
+% ------------------------------------------------------------------
+\lstdefinestyle{reportcode}{
+  backgroundcolor=\color{codegray},
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  breakatwhitespace=false,
+  columns=fullflexible,
+  keepspaces=true,
+  frame=single,
+  rulecolor=\color{black!20},
+  framesep=6pt,
+  xleftmargin=4pt,
+  xrightmargin=4pt,
+  showstringspaces=false,
+  commentstyle=\color{codecomment}\itshape,
+  keywordstyle=\color{reportblue}\bfseries,
+  tabsize=2
+}
+\lstset{style=reportcode}
+
+\newtcolorbox{infobox}[1][]{
+  colback=reportgray,
+  colframe=reportblue,
+  boxrule=0.6pt,
+  arc=2pt,
+  left=8pt,
+  right=8pt,
+  top=6pt,
+  bottom=6pt,
+  #1
+}
+
+% ------------------------------------------------------------------
+% Judul
+% ------------------------------------------------------------------
+\title{
+  \vspace{-1.5cm}
+  {\Large\scshape Teknik Kompilator}\\[0.35cm]
+  {\Huge\bfseries Laporan Mingguan}\\[0.35cm]
+  {\LARGE \textit{Function} dan \textit{Procedure}}
+}
+\author{}
+\date{18 November 2026}
+
+\begin{document}
+
+% ==================================================================
+% Halaman judul
+% ==================================================================
+\pagenumbering{roman}
+\hypersetup{pageanchor=false}
+\begin{titlepage}
+\centering
+\thispagestyle{empty}
+
+\vspace*{2.2cm}
+{\Large\scshape Teknik Kompilator\par}
+
+\vspace{1.8cm}
+{\Huge\bfseries Laporan Mingguan\par}
+\vspace{0.7cm}
+{\LARGE \textit{Function} dan \textit{Procedure}\par}
+
+\vspace{2.2cm}
+\begin{tabular}{>{\bfseries}rl}
+Tanggal     & : 18 November 2026 \\[0.35cm]
+\end{tabular}
+
+\vfill
+%{\large Laporan ini mencakup kemajuan, hambatan,\\
+%dan rencana kerja untuk minggu berikutnya.\par}
+
+\vspace{1.2cm}
+\end{titlepage}
+\setcounter{page}{2}
+\hypersetup{pageanchor=true}
+
+% ==================================================================
+% Daftar isi
+% ==================================================================
+\tableofcontents
+\newpage
+
+\pagenumbering{arabic}
+
+% ==================================================================
+% 1. Kemajuan
+% ==================================================================
+\section{Kemajuan}
+
+Target minggu ini adalah menambahkan dukungan \textit{function} dan
+\textit{procedure} pada kompilator.
+
+\begin{table}[ht]
+\centering
+\caption{Status target minggu ini}
+\label{tab:target}
+\begin{tabularx}{\linewidth}{@{}p{0.46\linewidth}p{0.16\linewidth}X@{}}
+\toprule
+\textbf{Target} & \textbf{Status} & \textbf{Berkas utama} \\
+\midrule
+\textit{Context checking} untuk function dan procedure
+  & Selesai & \texttt{Context.java} \\
+\textit{Code generation} aturan R untuk function dan procedure
+  & Selesai & \texttt{Generate.java} \\
+Penanganan hash table (\texttt{Bucket}) untuk setiap function/procedure
+  & Selesai & \texttt{Bucket.java} \\
+Penyesuaian aksi C dan grammar dengan dokumen course
+  & Selesai & \texttt{Context.java}, \texttt{Parser.cup} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{\textit{Context checking} pada \texttt{Context.java}}
+
+\begin{itemize}
+  \item \texttt{C22} menyimpan \textbf{entry point} badan rutin pada
+        \texttt{Bucket.orderNum} dan lexical level deklarasi pada
+        \texttt{Bucket.lexicLev}.
+  \item \texttt{C24}/\texttt{C26} menentukan kind rutin sebelum
+        \texttt{R7}, sehingga metadata tidak lagi ditentukan secara
+        tidak langsung dari \texttt{C0} atau \texttt{C5}.
+  \item \texttt{C25} memberi offset parameter negatif terhadap frame
+        base:
+        \begin{itemize}
+          \item function: parameter ke-\texttt{i} berada pada offset
+                $-(i + 3)$;
+          \item procedure: parameter ke-\texttt{i} berada pada offset
+                $-(i + 2)$.
+        \end{itemize}
+  \item \texttt{C5} mencatat tipe parameter pada daftar parameter
+        rutin, sehingga informasi parameter tetap tersedia setelah
+        scope parameter ditutup oleh \texttt{C27}.
+  \item \texttt{C30}--\texttt{C35} memakai \texttt{argCountStack}
+        untuk menghitung parameter dan argumen. Ini juga mendukung
+        pemanggilan bersarang.
+  \item \texttt{C8} memakai nama pada \texttt{symbolStack}, bukan
+        \texttt{currentStr}, karena pada pemanggilan function
+        \texttt{C8} dieksekusi setelah argumen-argumen.
+  \item \texttt{C16} tetap dipakai untuk assignment, sedangkan
+        \texttt{C36} khusus untuk tipe hasil function.
+\end{itemize}
+
+\subsection{\textit{Code generation} pada \texttt{Generate.java}}
+
+Aturan yang berkaitan dengan function dan procedure:
+
+\begin{center}
+\textbf{Tabel: Aturan code generation function dan procedure} \\[6pt]
+\begin{tabular}{@{} l p{0.78\linewidth} @{}}
+\hline
+\textbf{Aturan} & \textbf{Fungsi} \\
+\hline
+\texttt{R6}  & Memindahkan hasil perhitungan, menghapus variabel, dan keluar dari expression scope. \\
+\texttt{R42} & Return dari procedure. \\
+\texttt{R43} & Return dari function. \\
+\texttt{R44} & Memanggil procedure. \\
+\texttt{R45} & Membentuk block mark untuk pemanggilan procedure. \\
+\texttt{R46} & Membentuk block mark untuk pemanggilan function. \\
+\texttt{R47} & Memanggil function. \\
+\texttt{R48} & Mencatat/menyimpan argumen. Karena argumen sudah berada di stack, \texttt{R48} memperbarui counter argumen. \\
+\texttt{R49} & Jika identifier adalah function maka persiapan pemanggilan function, else ambil alamat variabel. \\
+\texttt{R50} & Jika identifier adalah function maka panggil function, else muat nilai variabel. \\
+\hline
+\end{tabular}
+\end{center}
+
+
+
+\subsection{Konvensi pemanggilan}
+
+Urutan pemanggilan:
+
+\begin{enumerate}
+  \item Pemanggil mendorong slot \textit{return address} (placeholder).
+  \item Argumen dievaluasi dan didorong.
+  \item Argumen dibalik dengan rangkaian instruksi \texttt{FLIP} agar
+        argumen pertama berada paling dekat dengan frame callee.
+  \item Entry point badan rutin didorong, lalu instruksi \texttt{BR}.
+  \item Callee menyiapkan frame melalui \texttt{R1}/\texttt{R2}.
+  \item Saat return, \texttt{R5}/\texttt{R6} membongkar frame dan
+        mengembalikan display.
+  \item \texttt{R42}/\texttt{R43} mengambil return address relatif
+        terhadap \textit{memory top}, lalu \texttt{BR}.
+  \item Pemanggil membersihkan argumen:
+        \begin{itemize}
+          \item function: hasil dipindahkan ke slot return address,
+                lalu argumen dibersihkan;
+          \item procedure: argumen dan slot return address dibersihkan.
+        \end{itemize}
+\end{enumerate}
+
+\begin{table}[ht]
+\centering
+\caption{Susunan frame saat pemanggilan function dan procedure}
+\label{tab:frame}
+\begin{tabularx}{\linewidth}{@{}lXX@{}}
+\toprule
+\textbf{Posisi} & \textbf{Function} & \textbf{Procedure} \\
+\midrule
+\texttt{R}                 & return address & return address \\
+\texttt{R+1} \ldots \texttt{R+n} & argumen (setelah dibalik)
+                           & argumen (setelah dibalik) \\
+\texttt{R+n+1}             & slot hasil fungsi & --- \\
+\texttt{R+n+2}             & display lama & display lama \\
+\texttt{B}                 & \texttt{R+n+3} & \texttt{R+n+2} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Dengan susunan tersebut, parameter function ke-\texttt{i} berada pada
+offset $-(i+3)$ dan parameter procedure ke-\texttt{i} berada pada
+offset $-(i+2)$ relatif terhadap \texttt{B}.
+
+\subsection{Hash table dan \texttt{Bucket.java}}
+
+\texttt{Bucket} menyimpan metadata rutin:
+
+\begin{itemize}
+  \item \texttt{paramTypes}: daftar tipe parameter sesuai urutan
+        deklarasi;
+  \item \texttt{paramCount}: jumlah parameter;
+  \item \texttt{lexicLev}: lexical level deklarasi;
+  \item \texttt{orderNum}: alamat entry point badan rutin;
+  \item \texttt{idKind}: \texttt{Bucket.FUNCTION} atau
+        \texttt{Bucket.PROCEDURE}.
+\end{itemize}
+
+Dengan demikian, setiap function/procedure memiliki satu bucket yang
+lengkap dan dapat dipakai untuk pemeriksaan argumen di titik
+pemanggilan.
+
+\subsection{Perubahan grammar pada \texttt{Parser.cup}}
+
+\begin{table}[ht]
+\centering
+\caption{Aksi grammar untuk function, procedure, dan parameter}
+\label{tab:grammar}
+\begin{tabularx}{\linewidth}{@{}p{0.23\linewidth}X@{}}
+\toprule
+\textbf{Produksi} & \textbf{Aksi} \\
+\midrule
+Deklarasi function
+  & \texttt{type FUNC IDENT C3 C26 R7 C22 C23 C5 C0 R2 funcBody} \\
+Deklarasi procedure
+  & \texttt{PROC IDENT C3 C24 R7 C22 C0 R1 procBody} \\
+\texttt{funcBody} tanpa param.
+  & \texttt{= expression C36 C11 C11 C2 R6 R43 R9 C7} \\
+\texttt{funcBody} berparameter
+  & \texttt{( C30 parameters C35 C1 ) = expression C36 C11 C11 C27 R6 R43 R9 C7} \\
+\texttt{procBody} berparameter
+  & \texttt{( C30 parameters C35 C1 ) scope C27 R5 R42 R9 C7} \\
+\texttt{parameters}
+  & \texttt{IDENT C3 C4 C25 : type C5 C11 C7 C34 moreParameters} \\
+Panggil procedure (bare)
+  & \texttt{C28 C29 R45 R44 C7} \\
+Panggil procedure (argumen)
+  & \texttt{( R45 C28 C30 arguments ) C32 R44 C7} \\
+Panggil function (bare)
+  & \texttt{C37 R49 C29 C8 R50 C7} \\
+Panggil function (argumen)
+  & \texttt{( C33 R46 C30 arguments ) C32 C8 R47 C7} \\
+\texttt{arguments}
+  & \texttt{expression C34 C31 C11 R48 moreArguments} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Bentuk pemanggilan dengan tanda kurung kosong (\texttt{f()} dan
+\texttt{p()}) yang sebelumnya merupakan ekstensi implementasi sudah
+dihapus agar grammar sesuai dengan dokumen course.
+
+\section{Hambatan}
+
+\begin{enumerate}
+%  \item \textbf{\texttt{R7} dipakai untuk dua hal berbeda.}
+%
+%        Selain branch badan rutin, \texttt{R7} juga dipakai untuk
+%        branch \texttt{else}. Pada implementasi sebelumnya, metadata
+%        rutin disimpan saat \texttt{R7}. Solusinya, metadata dipindahkan
+%        ke \texttt{C22} sehingga \texttt{R7} cukup membangkitkan
+%        forward branch.
+
+%  \item \textbf{Parameter tidak dialokasikan oleh grammar lama.}
+%
+%        Parameter sudah didorong pemanggil di bawah frame base.
+%        Solusinya, \texttt{C4} mengisi LL/ON umum, lalu \texttt{C25}
+%        memberi offset negatif sesuai posisi parameter dan jenis rutin.
+
+%  \item \textbf{Scope parameter memakai \texttt{C27}, bukan \texttt{C2}.}
+%
+%        Badan function/procedure berparameter harus keluar dari scope
+%        parameter sebelum \texttt{R6}/\texttt{R5}. Solusinya,
+%        \texttt{C27} diimplementasikan sebagai penghapusan simbol pada
+%        lexical level parameter dan penurunan lexical level.
+
+  \item \textbf{Mesin tidak memiliki instruksi \texttt{CALL}/\texttt{RET}.}
+
+        Pemanggilan dibangun dari \texttt{BR}, \texttt{PUSH},
+        \texttt{LOAD}, \texttt{STORE}, \texttt{PUSHMT}, dan
+        \texttt{POP}. Return address dan pembersihan argumen dihitung
+        relatif terhadap memory top. Pembersihan argumen dan pemindahan
+        hasil function dilakukan oleh pemanggil setelah callee return.
+
+  \item \textbf{Informasi parameter hilang setelah scope keluar.}
+
+        \texttt{C27} menghapus simbol parameter dari hash table.
+        Solusinya, tipe dan jumlah parameter disalin ke bucket rutin
+        saat deklarasi, sehingga tetap dapat dipakai untuk pemeriksaan
+        argumen di titik pemanggilan.
+
+  \item \textbf{Aksi \texttt{C37} sebelumnya belum ada.}
+
+        Akibatnya identifier non-function pada \texttt{subsOrCall}
+        tidak melewati \texttt{C20}. Array yang dipakai sebagai scalar
+        lolos tanpa error. Sekarang \texttt{C37} memilih \texttt{C33}
+        untuk function dan \texttt{C20} untuk selain function.
+
+  \item \textbf{Keterbatasan bahasa/grammar.}
+
+        Belum ada dukungan parameter array atau parameter
+        \textit{by-reference}. Belum ada deklarasi maju
+        (\textit{forward declaration}), sehingga mutual recursion
+        belum bisa. Pemanggilan rutin nested setelah scope induknya
+        selesai juga belum dijamin aman karena display parent sudah
+        tidak aktif.
+\end{enumerate}
+
+\section{Rencana Minggu Depan}
+
+\begin{enumerate}
+  \item \textbf{Menambah pengujian regresi otomatis.}
+
+        Membuat script yang menjalankan pengujian otomatis dengan
+        menjalankan kode berdasarkan input yang diberikan dan
+        membandingkan output. Kasus error juga
+        dimasukkan, termasuk pemanggilan
+        routine berparameter tanpa tanda kurung.
+
+  \item \textbf{Memperbaiki penanganan error sintaksis.}
+
+        Pada beberapa input dengan kesalahan sintaks, error recovery
+        masih dapat menyebabkan \texttt{EmptyStackException} pada
+        context checking. Rencananya, context checking dibuat lebih
+        defensif terhadap \texttt{symbolStack} dan \texttt{typeStack}
+        yang kosong.
+
+%  \item \textbf{Dukungan parameter array dan \textit{by-reference}.}
+%
+%        Jika spesifikasi bahasa mengizinkan, menambahkan parameter
+%        array dan mekanisme alamat. Perlu penyesuaian konvensi
+%        pemanggilan dan offset parameter.
+
+  \item \textbf{Perapian dan dokumentasi.}
+
+        Menampilkan entry point dan daftar parameter pada opsi
+        \texttt{-p}, serta membersihkan penggunaan API
+        \textit{deprecated} seperti \texttt{new Integer} secara
+        bertahap.
+
+  \item \textbf{Pengujian kombinasi scope yang lebih dalam.}
+
+        Menguji rutin nested beberapa level, rekursi pada rutin
+        nested, dan kombinasi array lokal dengan parameter.
+\end{enumerate}
+
+\appendix
+\section{Daftar Berkas yang Diubah}
+
+\begin{table}[ht]
+\centering
+\caption{Berkas yang diubah atau ditambahkan}
+\label{tab:files}
+\begin{tabularx}{\linewidth}{@{}p{0.28\linewidth}X@{}}
+\toprule
+\textbf{Berkas} & \textbf{Keterangan} \\
+\midrule
+\texttt{Bucket.java}   & Metadata parameter, jumlah parameter, lexical level, dan entry point rutin. \\
+\texttt{Context.java}  & Aksi \texttt{C22}--\texttt{C37} disesuaikan dengan \texttt{Semantics} kompilator kuliah. \\
+\texttt{Generate.java} & Aturan \texttt{R6}, \texttt{R42}--\texttt{R50}, helper call/return. \\
+\texttt{Parser.cup}    & Grammar function/procedure disesuaikan dengan \texttt{Grammar} kompilator kuliah. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\end{document}
