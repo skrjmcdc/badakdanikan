@@ -1,0 +1,16 @@
+{
+  integer func tambah(a : integer, b : integer) = a + b
+  integer func fakt(n : integer) =
+    { var r : integer;
+      if n <= 1 then
+        r := 1
+      else
+        r := n * fakt(n - 1)
+      end if;
+      r
+    }
+  proc cetak(x : integer) { ; put x };
+
+  cetak(tambah(3, 4))
+  cetak(fakt(5))
+}

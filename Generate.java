@@ -6,6 +6,8 @@
  * @author: DAJI Group (Dalton E. Pelawi & Jimmy)
  */
 
+import java.util.Stack;
+
 class Generate
 {
     final int stackSize   = 102,
@@ -25,6 +27,11 @@ class Generate
 
     int ll, on, top, addr, kode, cell;
     private String currConst;
+
+    // Compile-time stack for pending function/procedure calls.
+    private Stack callRoutineStack = new Stack();
+    private Stack callArgCountStack = new Stack();
+    private boolean pendingZeroArgCall = false;
 
     public Generate()
     {
@@ -108,6 +115,105 @@ class Generate
             Context.symbolHash.find(Context.currentStr).getOrderNum();
 
         cell = cell + 3;
+    }
+
+    // ----- helpers for function/procedure code generation -----
+
+    void emitOp(int opcode)
+    {
+        HMachine.memory[cell] = opcode;
+        cell = cell + 1;
+    }
+
+    void emitPush(int value)
+    {
+        HMachine.memory[cell] = HMachine.PUSH;
+        HMachine.memory[cell+1] = value;
+        cell = cell + 2;
+    }
+
+    void emitName(int level, int order)
+    {
+        HMachine.memory[cell] = HMachine.NAME;
+        HMachine.memory[cell+1] = level;
+        HMachine.memory[cell+2] = order;
+        cell = cell + 3;
+    }
+
+    void incrementCallArgumentCount()
+    {
+        if (!callArgCountStack.isEmpty())
+        {
+            int count = ((Integer)callArgCountStack.pop()).intValue();
+            callArgCountStack.push(new Integer(count + 1));
+        }
+    }
+
+    int popCallArgumentCount()
+    {
+        if (callArgCountStack.isEmpty())
+            return 0;
+
+        return ((Integer)callArgCountStack.pop()).intValue();
+    }
+
+    // Method to emit a call. The return address placeholder has already
+    // been pushed by R45/R46/R49. Actual arguments are on top of the stack
+    // and must be reversed so that the first argument is closest to the
+    // callee's frame base.
+    void emitCall(Bucket routine, boolean function, int actual)
+    {
+        int formal = routine.getParamCount();
+        int flips = actual * (actual - 1) / 2;
+
+        for (int i = 0; i < flips; i++)
+            emitOp(HMachine.FLIP);
+
+        emitPush(routine.getOrderNum());
+        emitOp(HMachine.BR);
+
+        // backpatch the return address to the cleanup code below
+        top = stackPop(returnAddrStack, top);
+        HMachine.memory[top] = cell;
+
+        // Caller membersihkan argumen dan memindahkan hasil fungsi
+        // ke posisi paling bawah (menimpa slot return address).
+        if (function)
+        {
+            emitOp(HMachine.PUSHMT);
+            emitPush(formal + 2);
+            emitOp(HMachine.SUB);
+            emitOp(HMachine.FLIP);
+            emitOp(HMachine.STORE);
+
+            emitPush(formal);
+            emitOp(HMachine.POP);
+        }
+        else
+        {
+            emitPush(formal + 1);
+            emitOp(HMachine.POP);
+        }
+    }
+
+    // Method to generate the return sequence of a function/procedure.
+    // R5/R6 sudah membongkar frame dan mengembalikan display, sehingga
+    // return address tinggal dihitung relatif terhadap memory top.
+    void emitRoutineReturn(boolean function)
+    {
+        Bucket routine = parser.context.currentRoutine();
+        int n = routine.getParamCount();
+
+        // Setelah teardown: mt = B-1.
+        // Prosedur  : return address di mt-(n+1)
+        // Fungsi    : return address di mt-(n+2)
+        emitOp(HMachine.PUSHMT);
+        emitPush(function ? (n + 2) : (n + 1));
+        emitOp(HMachine.SUB);
+        emitOp(HMachine.LOAD);
+        emitOp(HMachine.BR);
+
+        parser.context.endRoutine();
     }
 
     // Method to construct a routine to print text,
@@ -293,6 +399,14 @@ class Generate
                     cell = cell + 13;
                     on = stackPop(dynamicArrayStack, on);
                 }
+                break;
+
+            // R4 : push alamat slot hasil perhitungan.
+            // Catatan: CourseGrammar2 tidak memanggil R4; hasil function
+            // disimpan oleh R6.
+            case 4:
+                ll = Context.lexicalLevel;
+                emitName(ll, -2);
                 break;
 
             // R5 : construct instructions to delete variable,
@@ -692,32 +806,137 @@ class Generate
                 cell = cell + 29;
                 break;
 
-            // R49 : construct instructions similar to R31
-            //       for non-function identifier
-            case 49:
-                kode = Context.symbolHash.find(Context.currentStr).getIdKind();
-
-                if (kode == Bucket.FUNCTION)
-                    System.out.println("Unable to perform function implemetation.");
-                else
-                    obtainAddress();
-
+            // R42 : return dari prosedur (tanpa nilai hasil)
+            case 42:
+                emitRoutineReturn(false);
                 break;
 
-            // R50 : construct instructions similar to R32
-            //       for non-function identifier
-            case 50:
-                kode = Context.symbolHash.find(Context.currentStr).getIdKind();
+            // R43 : return dari fungsi (dengan nilai hasil)
+            case 43:
+                emitRoutineReturn(true);
+                break;
 
-                if (kode == Bucket.FUNCTION)
-                    System.out.println("Unable to perform function implemetation.");
-                else
+            // R44 : panggil prosedur
+            case 44:
+            {
+                if (!callRoutineStack.isEmpty())
                 {
-                   HMachine.memory[cell] = HMachine.LOAD;
-                   cell = cell + 1;
+                    Bucket calledProcedure = (Bucket)callRoutineStack.pop();
+                    int actual = popCallArgumentCount();
+                    emitCall(calledProcedure, false, actual);
+                }
+                break;
+            }
+
+            // R45 : bentuk block mark untuk pemanggilan prosedur
+            case 45:
+            {
+                Bucket proc = Context.symbolHash.find(Context.currentStr);
+
+                if (proc == null)
+                {
+                    proc = new Bucket(Context.currentStr);
+                    proc.setIdKind(Bucket.PROCEDURE);
+                    proc.setOrderNum(0);
                 }
 
+                // ruang untuk alamat kembali
+                HMachine.memory[cell] = HMachine.PUSH;
+                HMachine.memory[cell+1] = HMachine.undefined;
+                stackPush(cell + 1, returnAddrStack);
+                cell = cell + 2;
+
+                callRoutineStack.push(proc);
+                callArgCountStack.push(new Integer(0));
                 break;
+            }
+
+            // R46 : bentuk block mark untuk pemanggilan fungsi
+            case 46:
+            {
+                Bucket func = Context.symbolHash.find(Context.currentStr);
+
+                if (func == null)
+                {
+                    func = new Bucket(Context.currentStr);
+                    func.setIdKind(Bucket.FUNCTION);
+                    func.setOrderNum(0);
+                }
+
+                // ruang untuk alamat kembali
+                HMachine.memory[cell] = HMachine.PUSH;
+                HMachine.memory[cell+1] = HMachine.undefined;
+                stackPush(cell + 1, returnAddrStack);
+                cell = cell + 2;
+
+                callRoutineStack.push(func);
+                callArgCountStack.push(new Integer(0));
+                break;
+            }
+
+            // R47 : panggil fungsi
+            case 47:
+            {
+                if (!callRoutineStack.isEmpty())
+                {
+                    Bucket calledFunction = (Bucket)callRoutineStack.pop();
+                    int actual = popCallArgumentCount();
+                    emitCall(calledFunction, true, actual);
+                }
+                break;
+            }
+
+            // R48 : argumen sudah berada di stack; perbarui hitungan
+            //       argumen untuk keperluan pembalikan urutan.
+            case 48:
+                incrementCallArgumentCount();
+                break;
+
+            // R49 : alamat identifier, atau persiapan pemanggilan fungsi
+            //       tanpa tanda kurung (zero argument)
+            case 49:
+            {
+                Bucket routine = Context.symbolHash.find(Context.currentStr);
+
+                kode = (routine == null) ? Bucket.UNDEFINED : routine.getIdKind();
+
+                if (kode == Bucket.FUNCTION)
+                {
+                    HMachine.memory[cell] = HMachine.PUSH;
+                    HMachine.memory[cell+1] = HMachine.undefined;
+                    stackPush(cell + 1, returnAddrStack);
+                    cell = cell + 2;
+
+                    callRoutineStack.push(routine);
+                    callArgCountStack.push(new Integer(0));
+                    pendingZeroArgCall = true;
+                }
+                else
+                {
+                    pendingZeroArgCall = false;
+                    obtainAddress();
+                }
+                break;
+            }
+
+            // R50 : muat nilai identifier, atau panggil fungsi tanpa
+            //       tanda kurung (zero argument)
+            case 50:
+            {
+                if (pendingZeroArgCall)
+                {
+                    Bucket zeroArgFunction = (Bucket)callRoutineStack.pop();
+                    int actual = popCallArgumentCount();
+                    emitCall(zeroArgFunction, true, actual);
+                    pendingZeroArgCall = false;
+                }
+                else
+                {
+                    HMachine.memory[cell] = HMachine.LOAD;
+                    cell = cell + 1;
+                }
+                break;
+            }
 
             // R51 : construct instructions for end of the loop
             case 51:
@@ -744,6 +963,13 @@ class Generate
                 stackPush(loopMarker, R51R52Stack);
                 break;
         }
+    }
+
+    // Method to get the current code cell. Dipakai C22 untuk mencatat
+    // entry point badan fungsi/prosedur setelah R7.
+    public int getCell()
+    {
+        return cell;
     }
 
     // Method to set the current token

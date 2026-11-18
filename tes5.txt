@@ -1,0 +1,13 @@
+{
+  proc isi(n : integer) {
+    var i : integer
+    var a[5] : integer;
+    i := 0
+    repeat
+      a[i] := i * n
+      put a[i]
+      i := i + 1
+    until i >= 5
+  };
+  isi(3)
+}

@@ -1,7 +1,11 @@
+import java.util.Vector;
+
 class Bucket
 {
     public Bucket()
     {
+        paramTypes = new Vector();
+        paramCount = 0;
     }
 
     public Bucket(String idName)
@@ -12,6 +16,8 @@ class Bucket
         this.idType = UNDEFINED;
         this.idKind = UNDEFINED;
         this.nextBucket = null;
+        this.paramTypes = new Vector();
+        this.paramCount = 0;
     }
 
     public void setIdName(String idName)
@@ -53,6 +59,44 @@ class Bucket
     public void setNextBucket(Bucket next)
     {
         nextBucket = next;
+    }
+
+    /**
+     * Reset daftar parameter milik sebuah fungsi/prosedur.
+     * Dipakai ketika deklarasi fungsi/prosedur dimulai.
+     */
+    public void resetParameters()
+    {
+        paramTypes = new Vector();
+        paramCount = 0;
+    }
+
+    /**
+     * Menambahkan tipe parameter pada fungsi/prosedur.
+     * Parameter disimpan berurutan sesuai deklarasi.
+     */
+    public void addParamType(int type)
+    {
+        paramTypes.add(new Integer(type));
+        paramCount = paramTypes.size();
+    }
+
+    public void setParamCount(int count)
+    {
+        paramCount = count;
+    }
+
+    public int getParamCount()
+    {
+        return paramCount;
+    }
+
+    public int getParamType(int index)
+    {
+        if (index < 0 || index >= paramTypes.size())
+            return UNDEFINED;
+
+        return ((Integer)paramTypes.get(index)).intValue();
     }
 
     public String getIdName()
@@ -147,4 +191,6 @@ class Bucket
     private int idType;
     private int idKind;
     private Bucket nextBucket;
+    private Vector paramTypes;
+    private int paramCount;
 }
