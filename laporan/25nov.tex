@@ -178,30 +178,46 @@ Perapian dan dokumentasi
 
 \subsection{Menguji kombinasi scope yang lebih dalam}
 
-Berikut kode untuk menguji pemanggilan function secara rekursif:
+Berikut kode untuk menguji nested procedure:
 
 
 File: \texttt{tes6.txt}
 \begin{verbatim}
 {
-  integer func factorialrecursive(n : integer) =
-  {
-    var r : integer
+  proc tari(n : integer) {
+    proc dindin {
+      ;
+      put "Dindin badindin"
+    }
     ;
-    if n <= 1 then
-      r := 1
-    else
-      r := n * factorialrecursive(n - 1)
-    end if
-    ;
-    r
+    repeat
+      dindin
+      put "Ooo"
+      dindin
+      n := n - 1
+    until n <= 0
   }
   ;
-  put factorialrecursive(10)
+  tari(4)
 }
 \end{verbatim}
 
-Saat dijalankan, mesin menghasilkan output 3628800, yang menandakan bahwa rekursi sudah terimplementasi dengan benar.
+Berikut output setelah di-compile dan dijalankan di mesin:
+
+\begin{verbatim}
+Dindin badindin
+Ooo
+Dindin badindin
+Dindin badindin
+Ooo
+Dindin badindin
+Dindin badindin
+Ooo
+Dindin badindin
+Dindin badindin
+Ooo
+Dindin badindin
+\end{verbatim}
 
 \section{Hambatan}
 
