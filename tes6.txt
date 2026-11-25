@@ -1,16 +1,17 @@
 {
-  integer func factorialrecursive(n : integer) =
-  {
-    var r : integer
+  proc tari(n : integer) {
+    proc dindin {
+      ;
+      put "Dindin badindin"
+    }
     ;
-    if n <= 1 then
-      r := 1
-    else
-      r := n * factorialrecursive(n - 1)
-    end if
-    ;
-    r
+    repeat
+      dindin
+      put "Ooo"
+      dindin
+      n := n - 1
+    until n <= 0
   }
   ;
-  put factorialrecursive(10)
+  tari(4)
 }
