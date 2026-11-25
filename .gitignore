@@ -6,6 +6,7 @@
 /sym.java
 /Scanner.lex.java
 /Yylex.java
+temp
 
 # Visual Studio Code
 .vscode/
