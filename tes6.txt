@@ -1,0 +1,16 @@
+{
+  integer func factorialrecursive(n : integer) =
+  {
+    var r : integer
+    ;
+    if n <= 1 then
+      r := 1
+    else
+      r := n * factorialrecursive(n - 1)
+    end if
+    ;
+    r
+  }
+  ;
+  put factorialrecursive(10)
+}
